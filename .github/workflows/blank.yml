@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HHJJ 도어락 AI 위험 감지 시뮬레이터</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .scenario-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .scenario-btn {
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+        }
+        
+        .scenario-btn.normal {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+        }
+        
+        .scenario-btn.loitering {
+            background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
+        }
+        
+        .scenario-btn.intrusion {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+        
+        .scenario-btn.critical {
+            background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%);
+        }
+        
+        .scenario-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+        
+        .scenario-btn:active {
+            transform: translateY(0);
+        }
+        
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .sensor-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .sensor-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .sensor-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .sensor-bar {
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        
+        .sensor-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s;
+        }
+        
+        .risk-display {
+            text-align: center;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            transition: all 0.5s;
+        }
+        
+        .risk-display.LOW {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            color: white;
+        }
+        
+        .risk-display.MEDIUM {
+            background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
+            color: white;
+        }
+        
+        .risk-display.HIGH {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+        }
+        
+        .risk-display.CRITICAL {
+            background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%);
+            color: white;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .risk-level {
+            font-size: 3em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .risk-confidence {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .probability-bars {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .prob-item {
+            text-align: center;
+        }
+        
+        .prob-label {
+            font-size: 0.9em;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .prob-bar {
+            height: 100px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .prob-bar-fill {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: linear-gradient(180deg, #667eea, #764ba2);
+            transition: height 0.5s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .timeline {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+        }
+        
+        .timeline-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-left: 3px solid #667eea;
+            padding-left: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .timeline-time {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .timeline-event {
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        .action-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .action-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            font-weight: 500;
+        }
+        
+        .action-item.critical {
+            border-left-color: #ff0844;
+            background: #fff5f5;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .control-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .control-btn.start {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .control-btn.stop {
+            background: #f44336;
+            color: white;
+        }
+        
+        .control-btn.reset {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .chart-container {
+            margin-top: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        canvas {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔒 HHJJ 도어락 AI 위험 감지 시뮬레이터</h1>
+        <p class="subtitle">실시간 다중센서 융합 LSTM 위험도 판정 시스템</p>
+        
+        <div class="card">
+            <h2>📋 시나리오 선택</h2>
+            <div class="scenario-buttons">
+                <button class="scenario-btn normal" onclick="startScenario('normal')">
+                    ✅ 정상 방문자<br><small>택배원/가족</small>
+                </button>
+                <button class="scenario-btn loitering" onclick="startScenario('loitering')">
+                    ⚠️ 의심스러운 배회<br><small>장시간 체류</small>
+                </button>
+                <button class="scenario-btn intrusion" onclick="startScenario('intrusion')">
+                    🚨 침입 시도<br><small>드릴음 + 충격</small>
+                </button>
+                <button class="scenario-btn critical" onclick="startScenario('critical')">
+                    🆘 강제 파손<br><small>외함 개방 + 전원 차단</small>
+                </button>
+            </div>
+            
+            <div class="controls">
+                <button class="control-btn start" onclick="pauseResume()">
+                    <span id="pauseText">⏸️ 일시정지</span>
+                </button>
+                <button class="control-btn reset" onclick="resetSimulation()">
+                    🔄 초기화
+                </button>
+            </div>
+        </div>
+        
+        <div class="main-grid">
+            <div class="card">
+                <h2>📊 센서 데이터 (실시간)</h2>
+                <div class="sensor-grid">
+                    <div class="sensor-item">
+                        <div class="sensor-label">거리 (ToF)</div>
+                        <div class="sensor-value" id="distance-value">300 cm</div>
+                        <div class="sensor-bar">
+                            <div class="sensor-bar-fill" id="distance-bar"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="sensor-item">
+                        <div class="sensor-label">체류 시간</div>
+                        <div class="sensor-value" id="dwell-value">0 초</div>
+                        <div class="sensor-bar">
+                            <div class="sensor-bar-fill" id="dwell-bar"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="sensor-item">
+                        <div class="sensor-label">진동 강도 (IMU)</div>
+                        <div class="sensor-value" id="vibration-value">0.0 g</div>
+                        <div class="sensor-bar">
+                            <div class="sensor-bar-fill" id="vibration-bar"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="sensor-item">
+                        <div class="sensor-label">음압 레벨 (마이크)</div>
+                        <div class="sensor-value" id="audio-value">40 dB</div>
+                        <div class="sensor-bar">
+                            <div class="sensor-bar-fill" id="audio-bar"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="sensor-item">
+                        <div class="sensor-label">전원 상태</div>
+                        <div class="sensor-value" id="power-value">✅ 정상</div>
+                    </div>
+                    
+                    <div class="sensor-item">
+                        <div class="sensor-label">외함 상태</div>
+                        <div class="sensor-value" id="tamper-value">🔒 닫힘</div>
+                    </div>
+                </div>
+                
+                <div class="timeline" id="timeline">
+                    <h3>⏱️ 이벤트 타임라인</h3>
+                    <div id="timeline-content"></div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>🤖 AI 위험도 판정</h2>
+                <div class="risk-display" id="risk-display">
+                    <div class="risk-level" id="risk-level">LOW</div>
+                    <div class="risk-confidence" id="risk-confidence">신뢰도: 0%</div>
+                    <div class="sensor-value" id="elapsed-time">경과 시간: 0초</div>
+                </div>
+                
+                <h3>📈 위험도 확률 분포</h3>
+                <div class="probability-bars">
+                    <div class="prob-item">
+                        <div class="prob-label">LOW</div>
+                        <div class="prob-bar">
+                            <div class="prob-bar-fill" id="prob-low">0%</div>
+                        </div>
+                    </div>
+                    <div class="prob-item">
+                        <div class="prob-label">MEDIUM</div>
+                        <div class="prob-bar">
+                            <div class="prob-bar-fill" id="prob-medium">0%</div>
+                        </div>
+                    </div>
+                    <div class="prob-item">
+                        <div class="prob-label">HIGH</div>
+                        <div class="prob-bar">
+                            <div class="prob-bar-fill" id="prob-high">0%</div>
+                        </div>
+                    </div>
+                    <div class="prob-item">
+                        <div class="prob-label">CRITICAL</div>
+                        <div class="prob-bar">
+                            <div class="prob-bar-fill" id="prob-critical">0%</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 style="margin-top: 20px;">⚡ 자동 대응 조치</h3>
+                <ul class="action-list" id="action-list">
+                    <li class="action-item">대기 중...</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 시뮬레이션 상태
+        let currentScenario = null;
+        let elapsedTime = 0;
+        let simulationInterval = null;
+        let isPaused = false;
+        let timelineEvents = [];
+        
+        // 센서 데이터
+        let sensorData = {
+            distance: 300,
+            dwellTime: 0,
+            vibration: 0,
+            audio: 40,
+            powerNormal: true,
+            housingOpen: false
+        };
+        
+        // AI 모델 시뮬레이션 (간단한 규칙 기반)
+        function calculateRisk() {
+            let distanceScore = (300 - sensorData.distance) / 300;
+            let dwellScore = Math.min(sensorData.dwellTime / 300, 1);
+            let vibrationScore = Math.min(sensorData.vibration / 10, 1);
+            let audioScore = Math.min(Math.max((sensorData.audio - 40) / 80, 0), 1);
+            let powerScore = sensorData.powerNormal ? 0 : 1;
+            let tamperScore = sensorData.housingOpen ? 1 : 0;
+            
+            // 가중치 적용
+            let fusionScore = 
+                distanceScore * 0.25 +
+                dwellScore * 0.20 +
+                vibrationScore * 0.20 +
+                audioScore * 0.15 +
+                powerScore * 0.10 +
+                tamperScore * 0.10;
+            
+            // 위험도 레벨 결정
+            let riskLevel, confidence;
+            let probabilities = {
+                LOW: 0,
+                MEDIUM: 0,
+                HIGH: 0,
+                CRITICAL: 0
+            };
+            
+            if (fusionScore < 0.3) {
+                riskLevel = 'LOW';
+                confidence = (0.3 - fusionScore) / 0.3;
+                probabilities.LOW = confidence * 100;
+                probabilities.MEDIUM = (1 - confidence) * 100;
+            } else if (fusionScore < 0.6) {
+                riskLevel = 'MEDIUM';
+                confidence = (fusionScore - 0.3) / 0.3;
+                probabilities.MEDIUM = confidence * 100;
+                probabilities.HIGH = (1 - confidence) * 50;
+                probabilities.LOW = (1 - confidence) * 50;
+            } else if (fusionScore < 0.85) {
+                riskLevel = 'HIGH';
+                confidence = (fusionScore - 0.6) / 0.25;
+                probabilities.HIGH = confidence * 100;
+                probabilities.CRITICAL = (1 - confidence) * 60;
+                probabilities.MEDIUM = (1 - confidence) * 40;
+            } else {
+                riskLevel = 'CRITICAL';
+                confidence = (fusionScore - 0.85) / 0.15;
+                probabilities.CRITICAL = 90 + confidence * 10;
+                probabilities.HIGH = 10 - confidence * 10;
+            }
+            
+            return { riskLevel, confidence, probabilities };
+        }
+        
+        // 시나리오 정의
+        const scenarios = {
+            normal: {
+                name: '정상 방문자',
+                duration: 40,
+                update: (t) => {
+                    if (t < 5) {
+                        sensorData.distance = 200 - t * 30;
+                    } else if (t < 30) {
+                        sensorData.distance = 50;
+                    } else {
+                        sensorData.distance = 50 + (t - 30) * 30;
+                    }
+                    sensorData.dwellTime = t;
+                    sensorData.audio = (t === 10) ? 70 : 40;
+                    sensorData.vibration = 0;
+                    
+                    if (t === 10) {
+                        addTimelineEvent('도어벨 울림 (정상 신호)');
+                    }
+                }
+            },
+            loitering: {
+                name: '의심스러운 배회',
+                duration: 120,
+                update: (t) => {
+                    sensorData.distance = 50 + Math.random() * 10 - 5;
+                    sensorData.dwellTime = t;
+                    sensorData.audio = 40;
+                    sensorData.vibration = 0;
+                    
+                    if (t === 30) addTimelineEvent('30초 체류 - MEDIUM 위험 감지');
+                    if (t === 90) addTimelineEvent('90초 체류 - HIGH 위험 감지');
+                }
+            },
+            intrusion: {
+                name: '침입 시도',
+                duration: 180,
+                update: (t) => {
+                    sensorData.distance = 50 + Math.random() * 5;
+                    sensorData.dwellTime = t;
+                    
+                    if (t > 90) {
+                        sensorData.vibration = 3 + Math.random() * 2;
+                        sensorData.audio = 85 + Math.random() * 10;
+                        if (t === 91) addTimelineEvent('드릴음 감지 (85dB)');
+                        if (t === 92) addTimelineEvent('강한 진동 감지 (5g)');
+                    } else {
+                        sensorData.vibration = 0;
+                        sensorData.audio = 40;
+                    }
+                }
+            },
+            critical: {
+                name: '강제 파손',
+                duration: 200,
+                update: (t) => {
+                    sensorData.distance = 50;
+                    sensorData.dwellTime = t;
+                    
+                    if (t > 120) {
+                        sensorData.vibration = 5 + Math.random() * 3;
+                        sensorData.audio = 90 + Math.random() * 10;
+                    }
+                    
+                    if (t > 150) {
+                        sensorData.housingOpen = true;
+                        if (t === 151) addTimelineEvent('⚠️ 외함 강제 개방 감지!');
+                    }
+                    
+                    if (t > 180) {
+                        sensorData.powerNormal = false;
+                        if (t === 181) addTimelineEvent('🚨 전원 차단 시도 감지!');
+                    }
+                }
+            }
+        };
+        
+        // 시나리오 시작
+        function startScenario(scenarioName) {
+            resetSimulation();
+            currentScenario = scenarioName;
+            isPaused = false;
+            document.getElementById('pauseText').textContent = '⏸️ 일시정지';
+            
+            addTimelineEvent(`시나리오 시작: ${scenarios[scenarioName].name}`);
+            
+            simulationInterval = setInterval(() => {
+                if (!isPaused) {
+                    elapsedTime++;
+                    
+                    if (elapsedTime <= scenarios[currentScenario].duration) {
+                        scenarios[currentScenario].update(elapsedTime);
+                        updateDisplay();
+                    } else {
+                        pauseSimulation();
+                    }
+                }
+            }, 1000);
+        }
+        
+        // 화면 업데이트
+        function updateDisplay() {
+            // 센서 데이터 표시
+            document.getElementById('distance-value').textContent = Math.round(sensorData.distance) + ' cm';
+            document.getElementById('dwell-value').textContent = sensorData.dwellTime + ' 초';
+            document.getElementById('vibration-value').textContent = sensorData.vibration.toFixed(1) + ' g';
+            document.getElementById('audio-value').textContent = Math.round(sensorData.audio) + ' dB';
+            document.getElementById('power-value').textContent = sensorData.powerNormal ? '✅ 정상' : '❌ 이상';
+            document.getElementById('tamper-value').textContent = sensorData.housingOpen ? '🔓 열림' : '🔒 닫힘';
+            document.getElementById('elapsed-time').textContent = '경과 시간: ' + elapsedTime + '초';
+            
+            // 센서 바 업데이트
+            document.getElementById('distance-bar').style.width = ((300 - sensorData.distance) / 300 * 100) + '%';
+            document.getElementById('dwell-bar').style.width = (Math.min(sensorData.dwellTime / 300, 1) * 100) + '%';
+            document.getElementById('vibration-bar').style.width = (Math.min(sensorData.vibration / 10, 1) * 100) + '%';
+            document.getElementById('audio-bar').style.width = (Math.min((sensorData.audio - 40) / 80, 1) * 100) + '%';
+            
+            // AI 위험도 계산
+            const risk = calculateRisk();
+            
+            // 위험도 표시
+            const riskDisplay = document.getElementById('risk-display');
+            riskDisplay.className = 'risk-display ' + risk.riskLevel;
+            document.getElementById('risk-level').textContent = risk.riskLevel;
+            document.getElementById('risk-confidence').textContent = '신뢰도: ' + Math.round(risk.confidence * 100) + '%';
+            
+            // 확률 바 업데이트
+            document.getElementById('prob-low').style.height = risk.probabilities.LOW + '%';
+            document.getElementById('prob-low').textContent = Math.round(risk.probabilities.LOW) + '%';
+            
+            document.getElementById('prob-medium').style.height = risk.probabilities.MEDIUM + '%';
+            document.getElementById('prob-medium').textContent = Math.round(risk.probabilities.MEDIUM) + '%';
+            
+            document.getElementById('prob-high').style.height = risk.probabilities.HIGH + '%';
+            document.getElementById('prob-high').textContent = Math.round(risk.probabilities.HIGH) + '%';
+            
+            document.getElementById('prob-critical').style.height = risk.probabilities.CRITICAL + '%';
+            document.getElementById('prob-critical').textContent = Math.round(risk.probabilities.CRITICAL) + '%';
+            
+            // 대응 조치 표시
+            updateActions(risk.riskLevel, risk.confidence);
+        }
+        
+        // 대응 조치 업데이트
+        function updateActions(riskLevel, confidence) {
+            const actionList = document.getElementById('action-list');
+            let actions = [];
+            
+            if (riskLevel === 'LOW') {
+                actions = ['📝 이벤트 로그 기록'];
+            } else if (riskLevel === 'MEDIUM' && confidence > 0.6) {
+                actions = [
+                    '📱 사용자 앱 알림 전송',
+                    '📹 카메라 녹화 시작'
+                ];
+            } else if (riskLevel === 'HIGH' && confidence > 0.7) {
+                actions = [
+                    '🚨 사용자 긴급 알림',
+                    '🔒 도어락 강화 잠금',
+                    '📹 고해상도 영상 녹화',
+                    '📞 경비실 연결 대기'
+                ];
+            } else if (riskLevel === 'CRITICAL' || (riskLevel === 'HIGH' && confidence > 0.9)) {
+                actions = [
+                    '🚓 자동 경찰 신고 (진행 중)',
+                    '🔐 비상 잠금 활성화',
+                    '📦 증거 데이터 패키지 전송',
+                    '🔊 사이렌 작동',
+                    '📍 위치 정보 전송'
+                ];
+            }
+            
+            actionList.innerHTML = '';
+            actions.forEach(action => {
+                const li = document.createElement('li');
+                li.className = 'action-item';
+                if (riskLevel === 'CRITICAL') {
+                    li.classList.add('critical');
+                }
+                li.textContent = action;
+                actionList.appendChild(li);
+            });
+        }
+        
+        // 타임라인 이벤트 추가
+        function addTimelineEvent(event) {
+            const timelineContent = document.getElementById('timeline-content');
+            const item = document.createElement('div');
+            item.className = 'timeline-item';
+            item.innerHTML = `
+                <div class="timeline-time">${elapsedTime}초</div>
+                <div class="timeline-event">${event}</div>
+            `;
+            timelineContent.insertBefore(item, timelineContent.firstChild);
+            
+            // 최대 10개만 유지
+            if (timelineContent.children.length > 10) {
+                timelineContent.removeChild(timelineContent.lastChild);
+            }
+        }
+        
+        // 일시정지/재개
+        function pauseResume() {
+            isPaused = !isPaused;
+            document.getElementById('pauseText').textContent = isPaused ? '▶️ 재개' : '⏸️ 일시정지';
+        }
+        
+        function pauseSimulation() {
+            isPaused = true;
+            document.getElementById('pauseText').textContent = '▶️ 재개';
+        }
+        
+        // 초기화
+        function resetSimulation() {
+            if (simulationInterval) {
+                clearInterval(simulationInterval);
+            }
+            
+            elapsedTime = 0;
+            isPaused = false;
+            
+            sensorData = {
+                distance: 300,
+                dwellTime: 0,
+                vibration: 0,
+                audio: 40,
+                powerNormal: true,
+                housingOpen: false
+            };
+            
+            document.getElementById('timeline-content').innerHTML = '';
+            document.getElementById('action-list').innerHTML = '<li class="action-item">대기 중...</li>';
+            
+            updateDisplay();
+        }
+        
+        // 초기 화면 설정
+        resetSimulation();
+    </script>
+</body>
+</html>
